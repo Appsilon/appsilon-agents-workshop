@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: workshop
+      POSTGRES_USER: workshop
+      POSTGRES_PASSWORD: workshop
+    volumes:
+      - ${HOST_WORKSPACE:-.}/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://workshop:workshop@db:5432/workshop
+      CELERY_BROKER_URL: redis://redis:6379/0
+      # WORKSHOP TODO: Inject ANTHROPIC_API_KEY, ANTHROPIC_MODEL and LOGFIRE_TOKEN.
+    volumes:
+      - ${HOST_WORKSPACE:-.}/backend:/app
+      - /app/.venv
+    ports: ["8000:8000"]
+
+  worker:
+    build: ./backend
+    command: sh -c "uv run celery -A tasks worker --loglevel=INFO --concurrency=$${WORKER_CONCURRENCY:-2}"
+    environment:
+      DATABASE_URL: postgresql://workshop:workshop@db:5432/workshop
+      CELERY_BROKER_URL: redis://redis:6379/0
+      # WORKSHOP TODO: Inject ANTHROPIC_API_KEY, ANTHROPIC_MODEL and LOGFIRE_TOKEN.
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+    volumes:
+      - ${HOST_WORKSPACE:-.}/backend:/app
+      - /app/.venv
+
+  redis:
+    image: redis:8-alpine
+
+  web:
+    image: node:24-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ${HOST_WORKSPACE:-.}/frontend:/app
+      - /app/node_modules
+    ports: ["5173:5173"]

@@ -1,0 +1,30 @@
+{
+  "name": "Agents Workshop",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": { "moby": false },
+    "ghcr.io/devcontainers/features/node:1": { "version": "24" },
+    "ghcr.io/devcontainers/features/python:1": { "installTools": false },
+    "ghcr.io/va-h/devcontainers-features/uv:1": {}
+  },
+  "containerEnv": {
+    "HOST_WORKSPACE": "${localWorkspaceFolder}"
+  },
+  "postCreateCommand": "cd backend && uv sync && cd ../frontend && npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-python.vscode-pylance", "charliermarsh.ruff"],
+      "settings": {
+        "markdown.mermaid.enabled": true,
+        "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+        "js/ts.tsdk.path": "${workspaceFolder}/frontend/node_modules/typescript/lib"
+      }
+    }
+  },
+  "forwardPorts": [5173, 8000],
+  "portsAttributes": {
+    "5173": { "label": "Frontend", "visibility": "public" },
+    "8000": { "label": "Backend API", "visibility": "public" }
+  }
+}

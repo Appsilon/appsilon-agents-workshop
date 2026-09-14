@@ -1,0 +1,18 @@
+[project]
+name = "agents-workshop-api"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "celery[redis]>=5.5",
+    "fastapi[standard]>=0.115",
+    "psycopg[binary]>=3.2",
+    "sqlalchemy>=2.0",
+]
+
+[tool.ruff]
+line-length = 100
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.7",
+]

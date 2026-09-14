@@ -1,0 +1,25 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint src && npm run format:check",
+    "format": "prettier --write 'src/**/*.{ts,tsx,css}'",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx,css}'"
+  },
+  "dependencies": {
+    "@radix-ui/react-hover-card": "^1.1.23",
+    "@radix-ui/react-toast": "^1.2.23",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "oxlint": "latest",
+    "prettier": "^3.9.6",
+    "typescript": "latest",
+    "vite": "latest"
+  }
+}
