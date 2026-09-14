@@ -1,0 +1,21 @@
+{
+  "name": "Agents Workshop",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "api",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "overrideCommand": true,
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24" }
+  },
+  "postCreateCommand": "cd backend && uv sync && cd ../frontend && npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-python.vscode-pylance", "charliermarsh.ruff"],
+      "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+        "typescript.tsdk": "${workspaceFolder}/frontend/node_modules/typescript/lib"
+      }
+    }
+  },
+  "forwardPorts": [5173, 8000]
+}

@@ -1,0 +1,18 @@
+:root { font-family: Georgia, serif; color: #162d34; background: #eef2ed; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1320px; margin: 0 auto; padding: 48px 28px; }
+header { border-bottom: 3px solid #e87a4c; margin-bottom: 24px; }
+header p { color: #5e747b; font: 700 13px ui-monospace, monospace; letter-spacing: 1px; text-transform: uppercase; }
+h1 { font-size: 36px; font-weight: 500; margin: 8px 0 22px; }
+aside { background: #fff1eb; border-left: 4px solid #d6522c; color: #7a2d19; margin-bottom: 18px; padding: 13px 16px; }
+table { background: #fff; border-collapse: collapse; font-family: ui-sans-serif, sans-serif; font-size: 14px; width: 100%; }
+th, td { border-bottom: 1px solid #dce2df; padding: 14px 12px; text-align: left; }
+th { background: #193b44; color: #fff; font-size: 12px; letter-spacing: .6px; text-transform: uppercase; }
+.severity { border-radius: 4px; font-size: 12px; font-weight: 700; padding: 4px 7px; }
+.mild { background: #e5f0e4; color: #27633a; }.moderate { background: #fff0d6; color: #835500; }.severe { background: #f9ded7; color: #962c1e; }
+button { background: #fff; border: 1px solid #9baaa6; border-radius: 3px; color: #193b44; cursor: pointer; padding: 7px 10px; }
+button:hover:not(:disabled) { background: #e8f0ed; } button:disabled { cursor: not-allowed; opacity: .45; }
+footer { display: flex; font-family: ui-sans-serif, sans-serif; justify-content: space-between; margin-top: 18px; }
+footer span { padding: 7px; }
+@media (max-width: 800px) { main { padding: 28px 16px; overflow-x: auto; } table { min-width: 850px; } }
