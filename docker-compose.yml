@@ -10,10 +10,12 @@ services:
 
   api:
     build: ./backend
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql://workshop:workshop@db:5432/workshop
       CELERY_BROKER_URL: redis://redis:6379/0
-      # WORKSHOP TODO: Inject ANTHROPIC_API_KEY, ANTHROPIC_MODEL and LOGFIRE_TOKEN.
     volumes:
       - ${HOST_WORKSPACE:-.}/backend:/app
       - /app/.venv
@@ -22,10 +24,12 @@ services:
   worker:
     build: ./backend
     command: sh -c "uv run celery -A tasks worker --loglevel=INFO --concurrency=$${WORKER_CONCURRENCY:-2}"
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql://workshop:workshop@db:5432/workshop
       CELERY_BROKER_URL: redis://redis:6379/0
-      # WORKSHOP TODO: Inject ANTHROPIC_API_KEY, ANTHROPIC_MODEL and LOGFIRE_TOKEN.
       WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
     volumes:
       - ${HOST_WORKSPACE:-.}/backend:/app

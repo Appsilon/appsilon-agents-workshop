@@ -43,20 +43,16 @@ AI agents are powered by large language models. While it's possible to run one o
 
 During the live workshop, you can use an Appsilon-provided Anthropic API key. If you are following those steps after the workshop ended, you may need to create your own Anthropic account and pre-pay a small amount (eg. $5) in order to create your own API key.
 
-- [ ] Create a `.env` file at the repo root (it's git-ignored) with `ANTHROPIC_API_KEY`, `LOGFIRE_TOKEN`, and `ANTHROPIC_MODEL=claude-haiku-4-5`. Leave `LOGFIRE_TOKEN` empty for now, we will come back to this later.
+- [ ] Copy `.env.example` to `.env` at the repo root (`.env` is git-ignored, `.env.example` isn't) and fill in `ANTHROPIC_API_KEY`. Leave `LOGFIRE_TOKEN` empty for now, we will come back to this later.
+
+```sh
+cp .env.example .env
+```
 
 ```sh
 ANTHROPIC_API_KEY=paste-the-key-you-were-given
 ANTHROPIC_MODEL=claude-haiku-4-5
 LOGFIRE_TOKEN=
-```
-
-- [ ] In `docker-compose.yml`, replace the `# WORKSHOP TODO: Inject ANTHROPIC_API_KEY, ANTHROPIC_MODEL and LOGFIRE_TOKEN.` comment in both the `api` and `worker` services with the three matching `${...}` environment entries.
-
-```yaml
-ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-LOGFIRE_TOKEN: ${LOGFIRE_TOKEN}
-ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-haiku-4-5}
 ```
 
 - [ ] Restart the stack (`docker compose up --build`) so both containers pick up the new environment variables.
@@ -72,19 +68,21 @@ We will use Pydantic AI framework for defining the agent and Logfire for agentic
 - [ ] In `backend`, add `pydantic-ai-slim[anthropic]` and `logfire` as dependencies.
 
 ```sh
-cd backend && uv add 'pydantic-ai-slim[anthropic]' logfire && uv lock
+cd backend && uv add 'pydantic-ai-slim[anthropic]' logfire
 ```
 
 - [ ] In `backend`, add `pydantic-evals` as a dev dependency (used later, in step 11). We will use it later for evaluations.
 
 ```sh
-uv add --dev pydantic-evals && uv lock
+uv add --dev pydantic-evals
 ```
 
 ## 4. Define the Agent
 It's time to define the agent itself: its system prompt, inputs, output type, model, parameters, tools and capabilities.
 
 The agent's input type, `AdverseEvent`, is already written for you in `backend/models.py`. Open it and skim it before you start. It's a `pydantic.BaseModel`. There is also a `to_prompt_facts()` method that renders every set fact as a `Label: value` line.
+
+In `backend/tasks.py`:
 
 - [ ] Import `AnthropicModel` from `pydantic_ai.models.anthropic`, and pin the model: `MODEL = AnthropicModel(os.environ["ANTHROPIC_MODEL"])`.
 - [ ] Import `AdverseEvent` from `models`.
@@ -296,11 +294,14 @@ Click for copy-paste-ready implementation
 </summary>
 
 ```python
-forbidden = ["caused by", "diagnosed", "prescribed", "diagnosis"]
-if any(phrase in output.text.lower() for phrase in forbidden):
-    raise ModelRetry("Do not infer clinical facts.")
-if ctx.deps.subject_id not in output.text:
-    raise ModelRetry("Include the supplied subject ID.")
+@agent.output_validator
+async def factual_output(ctx: RunContext[AdverseEvent], output: Narrative) -> Narrative:
+    forbidden = ["caused by", "diagnosed", "prescribed", "diagnosis"]
+    if any(phrase in output.text.lower() for phrase in forbidden):
+        raise ModelRetry("Do not infer clinical facts.")
+    if ctx.deps.subject_id not in output.text:
+        raise ModelRetry("Include the supplied subject ID.")
+    return output
 ```
 </details>
 
@@ -318,6 +319,8 @@ print(after.output.text)
 
 ## 9. Bound the Context
 
+In its current form, the agent responds to the caller only once: there are no follow up messages you can ask in the same thread, so the context window size is not an issue. However, as it's an important thing to know, we will implement compacting mechanism nonetheless.
+
 - [ ] Above `agent = Agent(...)` in `backend/tasks.py`, add a `keep_recent_messages` function returning `messages[:1] + messages[-6:]` (the system prompt plus the newest 6 messages), import `ProcessHistory` from `pydantic_ai.capabilities`, and pass it to the existing `Agent(...)` call from step 5 as `capabilities=[ProcessHistory(keep_recent_messages)]`. Don't retype the whole call, just add the new argument:
 
 ```python
@@ -325,7 +328,9 @@ from pydantic_ai.capabilities import ProcessHistory
 
 
 def keep_recent_messages(messages: list[ModelMessage]) -> list[ModelMessage]:
-    # Fixed window, no summarization: fine for a single-turn agent.
+    # Fixed window, no summarization: keeps the system prompt plus the last 6 messages.
+    if len(messages) <= 7:
+        return messages
     return messages[:1] + messages[-6:]
 
 
@@ -339,8 +344,7 @@ agent = Agent(
     capabilities=[ProcessHistory(keep_recent_messages)],  # <- the only new line
 )
 ```
-
-Known tradeoff: older conversation detail is dropped. This narrative agent is single-turn, so the ceiling barely matters here. Name it anyway, because a multi-turn agent hits it fast.
+Known tradeoff: older conversation detail is dropped.
 
 ## 10. Add observability
 This step is optional and depends on creating your own Logfire account. If you decide to do it, generate your own token and suppply it in `.env` as `LOGFIRE_TOKEN`. Alternatively, you can follow the live workshop to see how Logfire looks without doing this hands-on.
