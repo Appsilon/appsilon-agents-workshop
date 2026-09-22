@@ -60,7 +60,10 @@ def adverse_events(page: int = 1, page_size: int = Query(default=10, le=25)):
     with SessionLocal() as session:
         total = session.scalar(select(func.count()).select_from(AdverseEventRecord))
         records = session.scalars(
-            select(AdverseEventRecord).order_by(AdverseEventRecord.id).limit(page_size).offset(offset)
+            select(AdverseEventRecord)
+            .order_by(AdverseEventRecord.id)
+            .limit(page_size)
+            .offset(offset)
         )
         return {
             "items": [_serialize(record) for record in records],
